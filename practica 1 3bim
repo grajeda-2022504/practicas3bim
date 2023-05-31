@@ -1,0 +1,121 @@
+erick Eduardo grajeda palacios 
+#include <Wire.h>
+
+#include <LiquidCrystal_I2C.h>
+
+
+
+
+// Conexiones
+
+const int trigPin = 6;
+
+const int echoPin = 7;
+
+const int buzzerPin = 4;
+
+const int relayPin = 5;
+
+const int pauseButtonPin = 2;
+
+const int pumpButtonPin = 3;
+
+
+
+
+// Configuración de la pantalla LCD
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+
+
+
+// Variables globales
+
+volatile bool pauseProgram = false;
+
+volatile bool pumpActivated = false;
+
+
+
+
+void setup() {
+
+  pinMode(trigPin, OUTPUT);
+
+  pinMode(echoPin, INPUT);
+
+  pinMode(buzzerPin, OUTPUT);
+
+  pinMode(relayPin, OUTPUT);
+
+  pinMode(pauseButtonPin, INPUT_PULLUP);
+
+  pinMode(pumpButtonPin, INPUT_PULLUP);
+
+
+
+
+  // Configurar interrupciones
+
+  attachInterrupt(digitalPinToInterrupt(pauseButtonPin), pauseInterrupt, LOW);
+
+  attachInterrupt(digitalPinToInterrupt(pumpButtonPin), pumpInterrupt, LOW);
+
+
+
+
+  // Inicializar la pantalla LCD
+
+  lcd.init();
+
+  lcd.backlight();
+
+}
+
+
+
+
+void loop() {
+
+  if (!pauseProgram) {
+
+    int distance = measureDistance();
+
+    int percentage = map(distance, 0, 500, 500, 0); // Ajustar los valores según el tamaño del contenedor
+
+    percentage = constrain(percentage, 0, 500);
+
+
+
+
+    lcd.clear();
+
+    lcd.setCursor(0, 0);
+
+    lcd.print("Nivel de agua: ");
+
+    lcd.print(percentage);
+
+    lcd.print("%");
+
+
+
+
+    if (percentage >= 500) {
+
+      digitalWrite(relayPin, LOW);
+
+      delay(5000);
+
+      alarm();
+
+    } else {
+
+      digitalWrite(relayPin, HIGH);
+
+      noTone(buzzerPin);
+
+      delay(5000);
+
+    }
